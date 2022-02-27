@@ -4,6 +4,7 @@ from rest_framework import status
 from exercise.models import Lesson, News
 from exercise.models import User
 from django.contrib.auth.models import Group, Permission
+from guardian.shortcuts import assign_perm
 
 
 class AccountsTest(APITestCase):
@@ -29,16 +30,16 @@ class AccountsTest(APITestCase):
             "school_name": "schoolname",
             "lesson_name": "lessonname2",
         }
-        teacher_permissions = (
-            "add_exercise", "change_exercise", "delete_exercise", "view_exercise", "change_lesson", "view_lesson",
-            "add_news", "change_news", "delete_news", "view_news")
+        # teacher_permissions = (
+        #     "add_exercise", "change_exercise", "delete_exercise", "view_exercise", "change_lesson", "view_lesson",
+        #     "add_news", "change_news", "delete_news", "view_news")
         group = Group(name="teacher_perm")
         group.save()
         group2 = Group(name="student_perm")
         group2.save()
-        for per in teacher_permissions:
-            permission = Permission.objects.get(codename=per)
-            group.permissions.add(permission)
+        # for per in teacher_permissions:
+        #     permission = Permission.objects.get(codename=per)
+        #     group.permissions.add(permission)
 
         self.client.post(self.register_url, self.user_data)
         self.client.post(self.register_url, self.user_data2)
@@ -47,8 +48,6 @@ class AccountsTest(APITestCase):
         self.l1 = Lesson.objects.get(teacher=self.account1)
         self.l2 = Lesson.objects.get(teacher=self.account2)
         self.sample_news = News.objects.create(teacher=self.account1, body="..", title="...")
-
-        self.account1.groups.add(group)
 
     def test_user_cannot_register_with_no_data(self):
         res = self.client.post(self.register_url)
@@ -65,6 +64,7 @@ class AccountsTest(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
     def test_teacher_can_add_student(self):
+        assign_perm("exercise.change_lesson", self.account1)
         self.client.force_login(user=self.account1)
         res = self.client.put(
             reverse('lessons_detail', kwargs={'pk': self.l1.id}),
@@ -76,12 +76,14 @@ class AccountsTest(APITestCase):
         self.assertTrue(student in students)
 
     def test_teacher_cannot_add_student_in_others_lesson(self):
+        assign_perm("exercise.change_lesson", self.account1)
         self.client.force_login(user=self.account1)
         res = self.client.get(
             reverse('lessons_detail', kwargs={'pk': self.l2.id}))
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_teacher_news(self):
+        assign_perm("exercise.add_news", self.account1)
         self.client.force_login(user=self.account1)
         res = self.client.post(
             reverse('news_list_create'),
@@ -100,6 +102,7 @@ class AccountsTest(APITestCase):
         self.assertEqual(user.first_name, "changed")
 
     def test_edit_news(self):
+        assign_perm("exercise.change_news", self.account1)
         self.client.force_login(user=self.account1)
         res = self.client.patch(
             reverse('news_detail', kwargs={'pk': self.sample_news.id}),
