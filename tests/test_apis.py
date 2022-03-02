@@ -5,63 +5,20 @@ from exercise.models import Lesson, News
 from exercise.models import User
 from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
+from model_mommy import mommy
+from django.conf import settings
 
 
-class AccountsTest(APITestCase):
+class ViewsTest(APITestCase):
     def setUp(self):
-        self.register_url = reverse("t_register")
-        self.login_url = reverse("login")
-
-        self.user_data = {
-            "username": "user1",
-            "first_name": "fname",
-            "last_name": "lname",
-            "password": "randompass",
-            "national_code": "4343434343",
-            "school_name": "schoolname",
-            "lesson_name": "lessonname",
-        }
-        self.user_data2 = {
-            "username": "user2",
-            "first_name": "f2name",
-            "last_name": "l2name",
-            "password": "randompass",
-            "national_code": "5566887799",
-            "school_name": "schoolname",
-            "lesson_name": "lessonname2",
-        }
-        # teacher_permissions = (
-        #     "add_exercise", "change_exercise", "delete_exercise", "view_exercise", "change_lesson", "view_lesson",
-        #     "add_news", "change_news", "delete_news", "view_news")
-        group = Group(name="teacher_perm")
-        group.save()
-        group2 = Group(name="student_perm")
-        group2.save()
-        # for per in teacher_permissions:
-        #     permission = Permission.objects.get(codename=per)
-        #     group.permissions.add(permission)
-
-        self.client.post(self.register_url, self.user_data)
-        self.client.post(self.register_url, self.user_data2)
-        self.account1 = User.objects.get(username="user1")
-        self.account2 = User.objects.get(username="user2")
-        self.l1 = Lesson.objects.get(teacher=self.account1)
-        self.l2 = Lesson.objects.get(teacher=self.account2)
-        self.sample_news = News.objects.create(teacher=self.account1, body="..", title="...")
-
-    def test_user_cannot_register_with_no_data(self):
-        res = self.client.post(self.register_url)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_user_cannot_register_with_duplicate_data(self):
-        self.client.post(self.register_url, self.user_data)
-        res = self.client.post(self.register_url, self.user_data)
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_user_can_login(self):
-        res = self.client.post(self.login_url,
-                               data={"username": self.user_data["username"], "password": self.user_data["password"]})
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.account1 = mommy.make(User, school_name="schoolname", lesson_name="lessonname")
+        self.account2 = mommy.make(User, school_name="schoolname", lesson_name="lessonname")
+        self.l1 = mommy.make(Lesson, teacher=self.account1)
+        self.l2 = mommy.make(Lesson, teacher=self.account2)
+        self.l2 = mommy.make(News, teacher=self.account2)
+        mommy.make(Group, name="student_perm")
+        mommy.make(Group, name="teacher_perm")
+        self.sample_news = mommy.make(News, teacher=self.account1)
 
     def test_teacher_can_add_student(self):
         assign_perm("exercise.change_lesson", self.account1)
@@ -92,17 +49,9 @@ class AccountsTest(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertIsNotNone(news)
 
-    def test_edit_profile(self):
-        self.client.force_login(user=self.account1)
-        res = self.client.patch(
-            reverse('profile', kwargs={'username': 'user1'}),
-            data={"first_name": "changed"}, format='json')
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        user = User.objects.get(username='user1')
-        self.assertEqual(user.first_name, "changed")
-
     def test_edit_news(self):
         assign_perm("exercise.change_news", self.account1)
+        assign_perm("exercise.view_news", self.account1)
         self.client.force_login(user=self.account1)
         res = self.client.patch(
             reverse('news_detail', kwargs={'pk': self.sample_news.id}),

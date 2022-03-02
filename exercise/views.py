@@ -12,7 +12,7 @@ from .permissions import *
 
 class NewsListCreate(generics.ListCreateAPIView):
     """for teachers to add or view their news"""
-    permission_classes = (IsAuthenticated, DjangoModelPermissions, TeacherPerm)
+    permission_classes = (IsAuthenticated, TeacherPermOnListViews)
     serializer_class = NewsSerializer
 
     def get_queryset(self):
@@ -29,7 +29,7 @@ class NewsListCreate(generics.ListCreateAPIView):
 
 class NewsList(generics.ListAPIView):
     """for students to view their teachers news"""
-    permission_classes = (IsAuthenticated, DjangoModelPermissions, StudentPerm)
+    permission_classes = (IsAuthenticated, StudentPerm)
     serializer_class = NewsSerializer
 
     def get_queryset(self):
@@ -42,7 +42,7 @@ class NewsList(generics.ListAPIView):
 
 class ExerciseListCreate(generics.ListCreateAPIView):
     """for teachers to add or view their exercises"""
-    permission_classes = (IsAuthenticated, DjangoModelPermissions, TeacherPerm)
+    permission_classes = (IsAuthenticated, TeacherPermOnListViews)
     serializer_class = ExerciseSerializer
 
     def get_queryset(self):
@@ -72,7 +72,7 @@ class ExerciseList(generics.ListAPIView):
 
 class Answers(generics.ListAPIView):
     """for students to view their answer"""
-    permission_classes = (IsAuthenticated, StudentPerm, DjangoModelPermissions)
+    permission_classes = (IsAuthenticated, StudentPerm)
     serializer_class = AnswerExerciseSerializer
 
     def get_queryset(self):
@@ -85,7 +85,7 @@ class Answers(generics.ListAPIView):
 
 class CheckAnswers(generics.ListAPIView):
     """for teachers to view their students answers"""
-    permission_classes = (IsAuthenticated, DjangoModelPermissions, TeacherPerm)
+    permission_classes = (IsAuthenticated, TeacherPermOnListViews)
     serializer_class = AnswerExerciseSerializer
 
     def get_queryset(self):
@@ -127,24 +127,24 @@ class AnswerToExercise(APIView):
 
 
 class ExercisesDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated, ExercisePerm, DjangoModelPermissions)
+    permission_classes = (IsAuthenticated, TeacherPermOnDetailViews)
     queryset = Exercise.objects.all()
     serializer_class = ExerciseSerializer
 
 
 class AnswerExerciseDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated, StudentEditPerm, DjangoModelPermissions)
+    permission_classes = (IsAuthenticated, StudentEditPerm)
     queryset = AnswerExercise.objects.all()
     serializer_class = AnswerExerciseSerializer
 
 
 class NewsDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated, TeacherPerm, DjangoModelPermissions)
+    permission_classes = (IsAuthenticated, TeacherPermOnDetailViews)
     queryset = News.objects.all()
     serializer_class = NewsSerializer
 
 
 class LessonDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAuthenticated, TeacherPerm, DjangoModelPermissions)
+    permission_classes = (IsAuthenticated, TeacherAddStudentPerm)
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
