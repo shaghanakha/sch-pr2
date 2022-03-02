@@ -14,9 +14,15 @@ class TeacherPermOnDetailViews(DjangoModelPermissions):
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
-            return True
+            if request.user == obj.teacher or request.user.is_staff:
+                return True
+            elif obj.teacher in request.user.has_teacher()[0]:
+                return True
+
         return bool(request.user == obj.teacher or request.user.is_staff)
 
+
+#
 
 class StudentPerm(DjangoModelPermissions):
 
