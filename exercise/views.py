@@ -38,6 +38,8 @@ class NewsList(generics.ListAPIView):
         if a[1]:
             query = News.objects.filter(teacher__in=a[0])
             return query
+        else:
+            return []
 
 
 class ExerciseListCreate(generics.ListCreateAPIView):
@@ -59,7 +61,7 @@ class ExerciseListCreate(generics.ListCreateAPIView):
 
 class ExerciseList(generics.ListAPIView):
     """for students to view their exercises"""
-    permission_classes = (IsAuthenticated, DjangoModelPermissions)
+    permission_classes = (IsAuthenticated, StudentPerm)
     serializer_class = ExerciseSerializer
 
     def get_queryset(self):
