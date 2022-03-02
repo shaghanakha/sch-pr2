@@ -5,7 +5,7 @@ from rest_framework import status
 from accounts.models import User
 
 
-class RLTest(APITestCase):
+class AccountTest(APITestCase):
     def setUp(self):
         self.register_url = reverse("t_register")
         self.login_url = reverse("login")

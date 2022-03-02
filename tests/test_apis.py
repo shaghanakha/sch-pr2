@@ -6,19 +6,17 @@ from exercise.models import User
 from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
 from model_mommy import mommy
-from django.conf import settings
 
 
-class ViewsTest(APITestCase):
+class ExerciseTest(APITestCase):
     def setUp(self):
         self.account1 = mommy.make(User, school_name="schoolname", lesson_name="lessonname")
         self.account2 = mommy.make(User, school_name="schoolname", lesson_name="lessonname")
         self.l1 = mommy.make(Lesson, teacher=self.account1)
         self.l2 = mommy.make(Lesson, teacher=self.account2)
-        self.l2 = mommy.make(News, teacher=self.account2)
+        self.sample_news = mommy.make(News, teacher=self.account1)
         mommy.make(Group, name="student_perm")
         mommy.make(Group, name="teacher_perm")
-        self.sample_news = mommy.make(News, teacher=self.account1)
 
     def test_teacher_can_add_student(self):
         assign_perm("exercise.change_lesson", self.account1)
@@ -51,7 +49,6 @@ class ViewsTest(APITestCase):
 
     def test_edit_news(self):
         assign_perm("exercise.change_news", self.account1)
-        assign_perm("exercise.view_news", self.account1)
         self.client.force_login(user=self.account1)
         res = self.client.patch(
             reverse('news_detail', kwargs={'pk': self.sample_news.id}),
